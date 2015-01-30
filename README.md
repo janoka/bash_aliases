@@ -1,1 +1,1 @@
-# bash_aliases
+# Bash aliases file

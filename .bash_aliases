@@ -1,25 +1,25 @@
 #!/bin/bash
-# Ötletek innen: http://www.cyberciti.biz/tips/bash-aliases-mac-centos-linux-unix.html
+# @see http://www.cyberciti.biz/tips/bash-aliases-mac-centos-linux-unix.html
 # Ls aliases
 alias ll='ls --color=auto -alF'
 alias la='ls --color=auto -A'
 alias l='ls --color=auto -CF'
 
-# Root only
+# Root only aliases.
 alias apti='apt-get install'
 alias apts='apt-cache search'
 alias aptp='apt-get purge'
 alias u='apt-get update && apt-get upgrade -y'
 
-# General system
+# General aliases.
 alias du1='du --max-depth=1 -m | sort -n'
 alias duh1='du --max-depth=1 -h'
 alias p='ps axf'
 alias df='df -h'
 alias chjanoka='chown janoka:janoka . -R; find . -type d -exec chmod 775 \{} \; ; find . -type f -exec chmod 664 \{} \;'
-alias sl='sublime-text-2'
 alias detox='detox -rs lower *'
 alias h='history'
+alias hg='history | grep'
 # Background jobs
 alias j='jobs -l'
 # Open ports
@@ -37,12 +37,14 @@ alias subl-sshconfig='subl ~/.ssh/config'
 alias drupalcs="phpcs --standard=~/.drush/coder/coder_sniffer/Drupal --extensions='php,module,inc,install,test,profile,theme,js,css,info,txt'"
 
 db() {
+  # Display the help text.
   HELP=$(echo -e "Használata:\n  db <paraméterek>\n\nParaméterek:\n  list|l      [<adatbázis rövidítés>]               - adatbázisok kilistázása.\n  table|t     <adatbázis> [<tábla rövídítés>]       - adatbázis táblái.\n  create|c    <adatbázis> [<felasználó> [<jelszó>]] - létrehozás úgy, hogy felasználó@localhost-nak full joga van.\n  drupal|d    <adatbázis>                           - létrehozás úgy, hogy drupal@localhost-nak full joga van.\n  drop        <adatbázis>                           - megszűntetés.\n  dump|du     <adatbázis> [<gzip file útvonala>]    - adatbázis dump készítése.\n  restore|re  <adatbázis> <gzip dump file útvonala> - adatbázis dumpból visszaállítás.\n  copy|co     <forrás adatbázis> <cél adatbázis>    - adatbázisból adatbázisba másolás.\n  grant|g     <adatbázis> <felasználó>  [<jelszó>]  - jogok adása az adatbázison felasználó@localhost-nak.\n  revoke|rv   <adatbázis> <felasználó>              - jogok elvonása.\n  rights|ri   <felasználó>                          - felasználó@localhost jogai.\n\n")
   if [ -z "${1}" ]; then echo -e "Nincs paraméter megadva.\n\n$HELP"
   else
     case $1 in
       list | l)
-        # Ha megadott az adatbázis szűkítés is.
+        # List the databases.
+        # If you give a parameter, than it fiter the databases names.  
         if [ ! -z "${2}" ]; then
           mysql -e "show databases like '%${2}%'"
         else
@@ -126,6 +128,8 @@ db() {
         if [ -z "${2}" ]; then echo -e "Nincs forrás és cél adatbázis megadva.\n\n$HELP"
         elif [ -z "${3}" ]; then echo -e "Nincs cél adatbázis megadva.\n\n$HELP"
         else
+          mysqladmin drop ${3}
+          mysqladmin create ${3}
           mysqldump ${2} | mysql ${3}
         fi ;;
     esac
@@ -235,8 +239,8 @@ n2dissite() {
 # Bash functions
 git-init () {
   git init .
-  git config user.name 'Kuszing János'
-  git config user.email 'kuszing.janos@netstudio.hu'
+  git config user.name 'Janos KUSZING'
+  git config user.email 'janos.kuszing@netstudio.hu'
   git config alias.co 'commit -a'
   git config alias.edconfig 'config --edit'
   git add .
@@ -246,13 +250,14 @@ git-init () {
 # CDPATH
 if [ "${HOSTNAME}" == "janoka-pc" ]; then
   export CDPATH=/etc/nginx/:/var/local/:"${CDPATH}"
-  export CDPATH=~/netstudio/2013/:~/privat/2013/:"${CDPATH}"
+  export CDPATH=~/netstudio/2015/:~/privat/2015/:"${CDPATH}"
   export CDPATH=~/develop/:~/downloads/:~/www:"${CDPATH}"
+  export CDPATH=~/www/l:~/www/t:"${CDPATH}"
+  export CDPATH=~/www/l/cc.l/sites/all/modules/nexteuropa/features:"${CDPATH}"
   export CDPATH=.:~:~/www/t:~/www/netstudio/:~/www/drupal-7/sites/:~/www/drupal-8/sites/:"${CDPATH}"
 elif [ "${HOSTNAME}" == "nginx" ]; then
   export CDPATH=/etc/nginx/:/var/www/:/var/local/:"${CDPATH}"
   export CDPATH=/var/www/netstudio/:"${CDPATH}"
-  export CDPATH=/var/www/drupal-6/sites/:"${CDPATH}"
   export CDPATH=.:~:/var/www/netstudio/:/var/www/drupal-7/sites/:"${CDPATH}"
 fi
 
@@ -306,4 +311,7 @@ fi
 if [ -d ~/.composer ] ; then
   export COMPOSER_HOME=~/.composer
   export PATH=~/.composer/vendor/bin:"${PATH}"
+fi
+if [ -d ~/www/l/bin ] ; then 
+  export PATH=~/www/l/bin:"${PATH}"
 fi

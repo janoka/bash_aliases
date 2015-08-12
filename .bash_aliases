@@ -38,20 +38,20 @@ alias drupalcs="phpcs --standard=~/.drush/coder/coder_sniffer/Drupal --extension
 
 db() {
   # Display the help text.
-  HELP=$(echo -e "Használata:\n  db <paraméterek>\n\nParaméterek:\n  list|l      [<adatbázis rövidítés>]               - adatbázisok kilistázása.\n  table|t     <adatbázis> [<tábla rövídítés>]       - adatbázis táblái.\n  create|c    <adatbázis> [<felasználó> [<jelszó>]] - létrehozás úgy, hogy felasználó@localhost-nak full joga van.\n  drupal|d    <adatbázis>                           - létrehozás úgy, hogy drupal@localhost-nak full joga van.\n  drop        <adatbázis>                           - megszűntetés.\n  dump|du     <adatbázis> [<gzip file útvonala>]    - adatbázis dump készítése.\n  restore|re  <adatbázis> <gzip dump file útvonala> - adatbázis dumpból visszaállítás.\n  copy|co     <forrás adatbázis> <cél adatbázis>    - adatbázisból adatbázisba másolás.\n  grant|g     <adatbázis> <felasználó>  [<jelszó>]  - jogok adása az adatbázison felasználó@localhost-nak.\n  revoke|rv   <adatbázis> <felasználó>              - jogok elvonása.\n  rights|ri   <felasználó>                          - felasználó@localhost jogai.\n\n")
+  HELP=$(echo -e "Usage:\n  db <parameters>\n  \nParameters:\n  list|l          [<filter for databases>]                  - listing databases.\n  table|t         <database> [<table filter>]               - tables of database.\n  create|c        <database> [<user> [<password>]]          - create a database, with full grants for user@localhost.\n  drupal|d        <database>                                - create a database, drupal@localhost user has a full rights.\n  drop            <database>                                - drop the database.\n  drop-tables|dt  <database>                                - drop tables in database.\n  dump|du         <database> [<gzip file path>]             - database dump creating.\n  restore|re      <database> <gzip dump file path>          - restore from database dump.\n  copy|co         <source database> <destination database>  - copy from source to destination (table of destination will be dropped before).\n  grant|g         <database> <user>  [<password>]           - for user@localhost gives rights.\n  revoke|rv       <database> <user>                         - revoke rights of a user@localhost.\n  rights|ri       <user>                                    - user@localhost rights.\n  \n")
   if [ -z "${1}" ]; then echo -e "Nincs paraméter megadva.\n\n$HELP"
   else
     case $1 in
       list | l)
         # List the databases.
-        # If you give a parameter, than it fiter the databases names.  
+        # If you give a parameter, than it fiter the databases names.
         if [ ! -z "${2}" ]; then
           mysql -e "show databases like '%${2}%'"
         else
           mysql -e "show databases"
         fi;;
       create | c)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         else
           # Adatbázis létrehozása
           mysql -e "create database ${2} default character set utf8 default collate utf8_hungarian_ci";
@@ -64,18 +64,23 @@ db() {
           fi
         fi ;;
       drupal | d)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         else
           # Adatbázis létrehozása
           mysql -e "create database ${2} default character set utf8 default collate utf8_hungarian_ci; grant all on ${2}.* to drupal@localhost; show grants for drupal@localhost"
         fi ;;
       drop)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         else
-          mysqladmin drop ${2}
+          mysql -e "drop database if exists ${2};"
+        fi ;;
+      drop-tables | dt)
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
+        else
+          mysql -e "drop database if exists ${2}; create database ${2}"
         fi ;;
       grant | g)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         else
           if [ ! -z "${4}" ]; then
             # Jelszó megadása is
@@ -86,18 +91,18 @@ db() {
           fi
         fi ;;
       revoke | rv)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         elif [ -z "${3}" ]; then echo -e "Nincs user megadva.\n\n$HELP"
         else
           mysql -e "revoke all on ${2}.* from ${3}@localhost; show grants for ${3}@localhost"
         fi ;;
       rights | ri)
-        if [ -z "${2}" ]; then echo -e "Nincs felhasználó megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Username is missing.\n\n$HELP"
         else
           mysql -e "show grants for ${2}@localhost"
         fi ;;
       tables | t)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         else
           # Ha megadott a tábla szűkítése is.
           if [ ! -z "${3}" ]; then
@@ -107,7 +112,7 @@ db() {
           fi
         fi ;;
       dump | du)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
         else
           DATE=$(date +%Y%m%d-%H%M)
           # Ha megadott fájlnév is.
@@ -118,18 +123,18 @@ db() {
           fi
         fi ;;
       restore | re)
-        if [ -z "${2}" ]; then echo -e "Nincs adatbázisnév megadva.\n\n$HELP"
-        elif [ -z "${3}" ]; then echo -e "Nincs dump fájl megadva.\n\n$HELP"
-        elif [ ! -f "${3}" ]; then echo -e "Nem létező ${3} dump fájl.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Database name is missing.\n\n$HELP"
+        elif [ -z "${3}" ]; then echo -e "Dump filename is missing.\n\n$HELP"
+        elif [ ! -f "${3}" ]; then echo -e "Not existing ${3} dump file.\n\n$HELP"
         else
           zcat ${3} | mysql ${2}
         fi ;;
       copy | co)
-        if [ -z "${2}" ]; then echo -e "Nincs forrás és cél adatbázis megadva.\n\n$HELP"
-        elif [ -z "${3}" ]; then echo -e "Nincs cél adatbázis megadva.\n\n$HELP"
+        if [ -z "${2}" ]; then echo -e "Undefined source database.\n\n$HELP"
+        elif [ -z "${3}" ]; then echo -e "Undefined destination database.\n\n$HELP"
         else
-          mysqladmin drop ${3}
-          mysqladmin create ${3}
+          mysql -e "drop database if exists ${3}; create database ${3} default character set utf8;"
+          # mysqladmin create ${3}
           mysqldump ${2} | mysql ${3}
         fi ;;
     esac
@@ -252,8 +257,7 @@ if [ "${HOSTNAME}" == "janoka-pc" ]; then
   export CDPATH=/etc/nginx/:/var/local/:"${CDPATH}"
   export CDPATH=~/netstudio/2015/:~/privat/2015/:"${CDPATH}"
   export CDPATH=~/develop/:~/downloads/:~/www:"${CDPATH}"
-  export CDPATH=~/www/l:~/www/t:"${CDPATH}"
-  export CDPATH=~/www/l/cc.l/sites/all/modules/nexteuropa/features:"${CDPATH}"
+  export CDPATH=~/www/c:~/www/l:~/www/t:"${CDPATH}"
   export CDPATH=.:~:~/www/t:~/www/netstudio/:~/www/drupal-7/sites/:~/www/drupal-8/sites/:"${CDPATH}"
 elif [ "${HOSTNAME}" == "nginx" ]; then
   export CDPATH=/etc/nginx/:/var/www/:/var/local/:"${CDPATH}"
@@ -265,35 +269,7 @@ alias ..='cd ..;pwd'
 alias ...='cd ../..;pwd'
 alias ....='cd ../../..;pwd'
 alias .....='cd ../../../..;pwd'
-alias etc='cd /etc/'
-
-#   L E S S   C O L O R S   F O R   M A N   P A G E S
-#   Forrás: http://superuser.com/questions/452034/bash-colorized-man-page
-# CHANGE FIRST NUMBER PAIR FOR COMMAND AND FLAG COLOR
-# currently 0;33 a.k.a. brown, which is dark yellow for me 
-export LESS_TERMCAP_md=$'\E[0;33;5;74m'  # begin bold
-# CHANGE FIRST NUMBER PAIR FOR PARAMETER COLOR
-# currently 0;36 a.k.a. cyan
-export LESS_TERMCAP_us=$'\E[0;36;5;146m' # begin underline
-# don't change anything here
-export LESS_TERMCAP_md=$'\E[0;33;5;74m'  # begin bold
-export LESS_TERMCAP_us=$'\E[0;36;5;146m' # begin underline
-export LESS_TERMCAP_mb=$'\E[1;31m'       # begin blinking
-export LESS_TERMCAP_me=$'\E[0m'           # end mode
-export LESS_TERMCAP_se=$'\E[0m'           # end standout-mode
-export LESS_TERMCAP_so=$'\E[38;5;246m'    # begin standout-mode - info box
-export LESS_TERMCAP_ue=$'\E[0m'           # end underline
- #########################################
- # Colorcodes:
- # Black       0;30     Dark Gray     1;30
- # Red         0;31     Light Red     1;31
- # Green       0;32     Light Green   1;32
- # Brown       0;33     Yellow        1;33
- # Blue        0;34     Light Blue    1;34
- # Purple      0;35     Light Purple  1;35
- # Cyan        0;36     Light Cyan    1;36
- # Light Gray  0;37     White         1;37
- #########################################
+alias ......='cd ../../../../..;pwd'
 
 # Extra
 export EDITOR=vim
@@ -312,6 +288,9 @@ if [ -d ~/.composer ] ; then
   export COMPOSER_HOME=~/.composer
   export PATH=~/.composer/vendor/bin:"${PATH}"
 fi
-if [ -d ~/www/l/bin ] ; then 
-  export PATH=~/www/l/bin:"${PATH}"
+if [ -d ~/www/c/bin ] ; then
+  export PATH=~/www/c/bin:"${PATH}"
 fi
+
+# NextEuropa project
+alias cdproject='cd build/sites/project'
